@@ -1,40 +1,39 @@
 param(
     [switch]$ExportCsv,
-    [string]$SubscriptionName,
-    [string]$NSGResourceGroupName,
-    [string]$NSGName,
-    [string]$StorageAccountName,
-    [string]$StorageAccountResourceGroup,
+    [string] [Parameter(Mandatory = $true)]$SubscriptionName,
+    [string] $NSGName,
+    [string] [Parameter(Mandatory = $true)]$StorageAccountName,    
     [string]$MacAddress,
     [datetime]$LogTime
 )
 function Get-NSGFlowLogCloudBlockBlob {
     [CmdletBinding()]
     param (
-        [string] [Parameter(Mandatory = $true)] $subscriptionId,
-        [string] [Parameter(Mandatory = $true)] $NSGResourceGroupName,
+        [string] [Parameter(Mandatory = $true)] $subscriptionId,    
         [string] [Parameter(Mandatory = $true)] $NSGName,
-        [string] [Parameter(Mandatory = $true)] $storageAccountName,
-        [string] [Parameter(Mandatory = $true)] $storageAccountResourceGroup,
+        [string] [Parameter(Mandatory = $true)] $storageAccountName,        
         [string] [Parameter(Mandatory = $true)] $macAddress,
         [datetime] [Parameter(Mandatory = $true)] $logTime
     )
 
     process {
         # Retrieve the primary storage account key to access the NSG logs
-        $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccountResourceGroup -Name $storageAccountName).Value[0]
+
+        $StorageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
+        $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $storageAccountName).Value[0]
 
         # Setup a new storage context to be used to query the logs
-        $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+        $ctx = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $StorageAccountKey
 
         # Container name used by NSG flow logs
         $ContainerName = "insights-logs-networksecuritygroupflowevent"
 
         # Name of the blob that contains the NSG flow log
         $subscriptionId = $subscriptionId.ToUpper();
-        $NSGResourceGroupName = $NSGResourceGroupName.ToUpper();
+        $NSGResourceGroup = Get-AzNetworkSecurityGroup | Where-Object { $_.Name -eq $NSGName }
+        $NSGResourceGroupName = $NSGResourceGroup.ResourceGroupName.ToUpper();
         $NSGName = $NSGName.ToUpper();
-
+        
         $BlobName = "resourceId=/SUBSCRIPTIONS/${subscriptionId}/RESOURCEGROUPS/${NSGResourceGroupName}/PROVIDERS/MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/${NSGName}/y=$($logTime.Year)/m=$(($logTime).ToString("MM"))/d=$(($logTime).ToString("dd"))/h=$(($logTime).ToString("HH"))/m=00/macAddress=$($macAddress)/PT1H.json"
 
         # Write-Host  $BlobName
@@ -105,8 +104,8 @@ function Get-NSGFlowLogReadBlock {
 $SubscriptionContext = Set-AzContext -SubscriptionName $SubscriptionName
 $SubscriptionId = $(Get-AzSubscription -SubscriptionName $SubscriptionName).SubscriptionId 
 
-$CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId -NSGResourceGroupName $NSGResourceGroupName `
-    -NSGName $NSGName -storageAccountName $StorageAccountName -storageAccountResourceGroup $StorageAccountResourceGroup `
+$CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
+    -NSGName $NSGName -storageAccountName $StorageAccountName `
     -macAddress $MacAddress -logTime $LogTime
     
 $blockList = Get-NSGFlowLogBlockList -CloudBlockBlob $CloudBlockBlob
