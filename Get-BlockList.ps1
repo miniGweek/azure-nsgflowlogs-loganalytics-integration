@@ -1,5 +1,4 @@
 param(
-    [switch]$ExportCsv,
     [string] [Parameter(Mandatory = $true)]$SubscriptionName,
     [string] $NSGName,
     [string] [Parameter(Mandatory = $true)]$StorageAccountName,    
@@ -11,40 +10,46 @@ function Get-NSGFlowLogCloudBlockBlob {
     param (
         [string] [Parameter(Mandatory = $true)] $subscriptionId,    
         [string] [Parameter(Mandatory = $true)] $NSGName,
-        [string] [Parameter(Mandatory = $true)] $storageAccountName,        
-        [string] [Parameter(Mandatory = $true)] $macAddress,
+        [string] [Parameter(Mandatory = $true)] $NSGResourceGroupName,
+        [string] [Parameter(Mandatory = $true)] $storageAccountName, 
+        [string][Parameter(Mandatory = $true)]  $StorageAccountKey, 
+        [Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext][Parameter(Mandatory = $true)] $Ctx, 
+        [string] $macAddress,
         [datetime] [Parameter(Mandatory = $true)] $logTime
     )
 
     process {
         # Retrieve the primary storage account key to access the NSG logs
-
-        $StorageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
-        $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $storageAccountName).Value[0]
-
-        # Setup a new storage context to be used to query the logs
-        $ctx = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $StorageAccountKey
-
         # Container name used by NSG flow logs
         $ContainerName = "insights-logs-networksecuritygroupflowevent"
 
         # Name of the blob that contains the NSG flow log
         $subscriptionId = $subscriptionId.ToUpper();
-        $NSGResourceGroup = Get-AzNetworkSecurityGroup | Where-Object { $_.Name -eq $NSGName }
-        $NSGResourceGroupName = $NSGResourceGroup.ResourceGroupName.ToUpper();
+        # $NSGResourceGroup = Get-AzNetworkSecurityGroup | Where-Object { $_.Name -eq $NSGName }
+        $NSGResourceGroupName = $NSGResourceGroupName.ToUpper();
         $NSGName = $NSGName.ToUpper();
         
-        $BlobName = "resourceId=/SUBSCRIPTIONS/${subscriptionId}/RESOURCEGROUPS/${NSGResourceGroupName}/PROVIDERS/MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/${NSGName}/y=$($logTime.Year)/m=$(($logTime).ToString("MM"))/d=$(($logTime).ToString("dd"))/h=$(($logTime).ToString("HH"))/m=00/macAddress=$($macAddress)/PT1H.json"
+        $CloudBlockBlobs = @();
+        if ($MacAddress.Length -gt 0) {
+            $BlobName = "resourceId=/SUBSCRIPTIONS/${subscriptionId}/RESOURCEGROUPS/${NSGResourceGroupName}/PROVIDERS/MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/${NSGName}/y=$($logTime.Year)/m=$(($logTime).ToString("MM"))/d=$(($logTime).ToString("dd"))/h=$(($logTime).ToString("HH"))/m=00/macAddress=$($macAddress)/PT1H.json"
+            $Blob = Get-AzStorageBlob -Context $Ctx -Container $ContainerName -Blob $BlobName
 
-        # Write-Host  $BlobName
-        # Gets the storage blog
-        $Blob = Get-AzStorageBlob -Context $ctx -Container $ContainerName -Blob $BlobName
-
-        # Gets the block blog of type 'Microsoft.Azure.Storage.Blob.CloudBlob' from the storage blob
-        $CloudBlockBlob = [Microsoft.Azure.Storage.Blob.CloudBlockBlob] $Blob.ICloudBlob
-
+            # Gets the block blog of type 'Microsoft.Azure.Storage.Blob.CloudBlob' from the storage blob
+            $CloudBlockBlob = [Microsoft.Azure.Storage.Blob.CloudBlockBlob] $Blob.ICloudBlob
+            $CloudBlockBlobs += $CloudBlockBlob
+        }
+        else {
+            $BlobName = "resourceId=/SUBSCRIPTIONS/${subscriptionId}/RESOURCEGROUPS/${NSGResourceGroupName}/PROVIDERS/MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/${NSGName}/y=$($logTime.Year)/m=$(($logTime).ToString("MM"))/d=$(($logTime).ToString("dd"))/h=$(($logTime).ToString("HH"))/m=00/"
+            $Blobs = Get-AzStorageBlob -Context $Ctx -Container $ContainerName -Prefix $BlobName
+           
+            foreach ($Blob in $Blobs) {
+                # Gets the block blog of type 'Microsoft.Azure.Storage.Blob.CloudBlob' from the storage blob
+                $CloudBlockBlob = [Microsoft.Azure.Storage.Blob.CloudBlockBlob] $Blob.ICloudBlob
+                $CloudBlockBlobs += $CloudBlockBlob
+            }
+        }
         #Return the Cloud Block Blob
-        $CloudBlockBlob
+        $CloudBlockBlobs
     }
 }
 
@@ -103,60 +108,82 @@ function Get-NSGFlowLogReadBlock {
 
 $SubscriptionContext = Set-AzContext -SubscriptionName $SubscriptionName
 $SubscriptionId = $(Get-AzSubscription -SubscriptionName $SubscriptionName).SubscriptionId 
+$StorageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $StorageAccountName }
+$StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccountName).Value[0]
+# Setup a new storage context to be used to query the logs
+$Ctx = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $StorageAccountKey
 
-$CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
-    -NSGName $NSGName -storageAccountName $StorageAccountName `
-    -macAddress $MacAddress -logTime $LogTime
+$CloudBlockBlobs = @();
+if ($NSGName.Length -gt 0) {
+    $NSG = Get-AzNetworkSecurityGroup | Where-Object { $_.Name -eq $NSGName }
     
-$blockList = Get-NSGFlowLogBlockList -CloudBlockBlob $CloudBlockBlob
-# $blockList
+    $CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
+        -storageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey  -Ctx $Ctx `
+        -NSGName $NSGName  -NSGResourceGroupName $NSG.ResourceGroupName `
+        -macAddress $MacAddress -logTime $LogTime
 
-
-$valuearray = Get-NSGFlowLogReadBlock -blockList $blockList -CloudBlockBlob $CloudBlockBlob
-
-$valuearrayjsonstring = $valuearray -join ""
-
-$valuerraylistobject = ConvertFrom-Json $valuearrayjsonstring
-
-$Records = New-Object Collections.Generic.List[PSCustomObject]
-foreach ($value in $valuerraylistobject.records) {    
-    foreach ($NSGFlowRecord in $value.properties.flows) {
-        foreach ($flow in $NSGFlowRecord.flows) {
-            foreach ($flowtuple in $flow.flowTuples) {
-                $FlowTupleMembers = $flowtuple -Split ","
-                $TimeRecord = [PSCustomObject]@{
-                    TimeGenerated                = $value.time
-                    MacAddress                   = $value.macAddress
-                    ResourceId                   = $value.resourceId
-                    Rule                         = $NSGFlowRecord.rule
-                    TimeWhenOcurred              = (Get-Date 01.01.1970) + ([System.TimeSpan]::FromSeconds($FlowTupleMembers[0]))
-                    SourceIP                     = $FlowTupleMembers[1]
-                    DestinationIp                = $FlowTupleMembers[2]
-                    SourcePort                   = $FlowTupleMembers[3]
-                    DestinationPort              = $FlowTupleMembers[4]
-                    Protocol                     = $FlowTupleMembers[5]
-                    TrafficFlow                  = $FlowTupleMembers[6]
-                    TrafficDecision              = $FlowTupleMembers[7]
-                    FlowState                    = $FlowTupleMembers[8]
-                    PacketsSourceToDestination   = $FlowTupleMembers[9]
-                    BytessentSourceToDestination = $FlowTupleMembers[10]
-                    PacketsDestinationToSource   = $FlowTupleMembers[11]
-                    BytessentDestinationToSource = $FlowTupleMembers[12]
-                }
-                $Records.Add($TimeRecord)
-            }
-        }
-    }
-}
-if ($ExportCsv.IsPresent) {
-    $FileLogTimeIdentifier = $LogTime.ToString("ddMMyyyyhhmmss")
-    $CsvFileName = "Nsgflowlogs_$($NSGName)_$($MacAddress)_$FileLogTimeIdentifier.csv" 
-    $Records | Export-Csv -Path $CsvFileName
+    $CloudBlockBlobs += $CloudBlockBlob
 }
 else {
-    $Records
-}
+    $NSGs = Get-AzNetworkSecurityGroup
+    foreach ($NSG in $NSGs) {
+        $CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
+            -storageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey  -Ctx $Ctx `
+            -NSGName $NSG.Name  -NSGResourceGroupName $NSG.ResourceGroupName `
+            -logTime $LogTime
 
+        $CloudBlockBlobs += $CloudBlockBlob
+    }
+}
+$Records = New-Object Collections.Generic.List[PSCustomObject]
+Write-Host "Total CloudBlockBlobs to iterate :$($CloudBlockBlobs.Length)"
+$CloudBlockBlobIndex = 0;
+foreach ($CloudBlockBlob in $CloudBlockBlobs) {
+    $CloudBlockBlobIndex++;
+    $blockList = Get-NSGFlowLogBlockList -CloudBlockBlob $CloudBlockBlob
+    $valuearray = Get-NSGFlowLogReadBlock -blockList $blockList -CloudBlockBlob $CloudBlockBlob
+    $valuearrayjsonstring = $valuearray -join ""
+    $valuerraylistobject = ConvertFrom-Json $valuearrayjsonstring
+    foreach ($value in $valuerraylistobject.records) {    
+        foreach ($NSGFlowRecord in $value.properties.flows) {
+            foreach ($flow in $NSGFlowRecord.flows) {
+                foreach ($flowtuple in $flow.flowTuples) {
+                    $FlowTupleMembers = $flowtuple -Split ","
+                    $TimeRecord = [PSCustomObject]@{
+                        TimeGenerated                = $value.time
+                        MacAddress                   = $value.macAddress
+                        ResourceId                   = $value.resourceId
+                        Rule                         = $NSGFlowRecord.rule
+                        TimeWhenOcurred              = (Get-Date 01.01.1970) + ([System.TimeSpan]::FromSeconds($FlowTupleMembers[0]))
+                        SourceIP                     = $FlowTupleMembers[1]
+                        DestinationIp                = $FlowTupleMembers[2]
+                        SourcePort                   = $FlowTupleMembers[3]
+                        DestinationPort              = $FlowTupleMembers[4]
+                        Protocol                     = $FlowTupleMembers[5]
+                        TrafficFlow                  = $FlowTupleMembers[6]
+                        TrafficDecision              = $FlowTupleMembers[7]
+                        FlowState                    = $FlowTupleMembers[8]
+                        PacketsSourceToDestination   = $FlowTupleMembers[9]
+                        BytessentSourceToDestination = $FlowTupleMembers[10]
+                        PacketsDestinationToSource   = $FlowTupleMembers[11]
+                        BytessentDestinationToSource = $FlowTupleMembers[12]
+                    }
+                    $Records.Add($TimeRecord)
+                }
+            }
+     
+        }
+    }
+    Write-Host "Processed CloudBlockBlob index:$CloudBlockBlobIndex"
+
+    $FileLogTimeIdentifier = $LogTime.ToString("ddMMyyyyhhmmss")
+    $CsvFileName = "Nsgflowlogs_$($NSGName)_$($MacAddress)_$FileLogTimeIdentifier.csv" 
+    $Records | Export-Csv -Path $CsvFileName -Append
+    Write-Host "Appended CloudBlockBlob data at index:$CloudBlockBlobIndex to csv"
+
+    $Records = New-Object Collections.Generic.List[PSCustomObject]
+    
+}
 
 
 
