@@ -1,3 +1,12 @@
+param(
+    [string]$SubscriptionName,
+    [string]$NSGResourceGroupName,
+    [string]$NSGName,
+    [string]$StorageAccountName,
+    [string]$StorageAccountResourceGroup,
+    [string]$MacAddress,
+    [string]$LogTime
+)
 function Get-NSGFlowLogCloudBlockBlob {
     [CmdletBinding()]
     param (
@@ -53,16 +62,6 @@ function Get-NSGFlowLogBlockList {
     }
 }
 
-
-$CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId "c72448e0-7dcd-4bf4-adfc-ec46f8810bc4" -NSGResourceGroupName "rg-prd-occub-services-001" `
-    -NSGName "nsg-prd-occub-app-001" -storageAccountName "stasahigoccubprd" -storageAccountResourceGroup "rg-prd-occub-services-001" `
-    -macAddress "0022480FD8FF" -logTime "09/01/2021 07:00" 
-
-# $CloudBlockBlob
-    
-$blockList = Get-NSGFlowLogBlockList -CloudBlockBlob $CloudBlockBlob
-# $blockList
-
 function Get-NSGFlowLogReadBlock {
     [CmdletBinding()]
     param (
@@ -100,12 +99,26 @@ function Get-NSGFlowLogReadBlock {
     #Return the Array
     $valuearray
 }
+
+
+$SubscriptionContext = Set-AzContext -SubscriptionName $SubscriptionName
+$SubscriptionId = $(Get-AzSubscription -SubscriptionName $SubscriptionName).SubscriptionId 
+
+$CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId -NSGResourceGroupName $NSGResourceGroupName `
+    -NSGName $NSGName -storageAccountName $StorageAccountName -storageAccountResourceGroup $StorageAccountResourceGroup `
+    -macAddress $MacAddress -logTime $LogTime
+    
+$blockList = Get-NSGFlowLogBlockList -CloudBlockBlob $CloudBlockBlob
+# $blockList
+
+
 $valuearray = Get-NSGFlowLogReadBlock -blockList $blockList -CloudBlockBlob $CloudBlockBlob
 
 $valuearrayjsonstring = $valuearray -join ""
 
 $valuerraylistobject = ConvertFrom-Json $valuearrayjsonstring
-$valuerraylistobject
+
+$valuerraylistobject.records | Select-Object @{Name = "NSGFlows"; Expression = { $_.properties.flows } }
 # for ($i = 1; $i -lt $valuearray.Length - 1; $i++) {
 #     Write-Host $valuearray[$i];
 #     if ($i -eq 5) {
