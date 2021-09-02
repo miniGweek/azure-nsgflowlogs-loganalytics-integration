@@ -1,11 +1,12 @@
 param(
+    [switch]$ExportCsv,
     [string]$SubscriptionName,
     [string]$NSGResourceGroupName,
     [string]$NSGName,
     [string]$StorageAccountName,
     [string]$StorageAccountResourceGroup,
     [string]$MacAddress,
-    [string]$LogTime
+    [datetime]$LogTime
 )
 function Get-NSGFlowLogCloudBlockBlob {
     [CmdletBinding()]
@@ -118,10 +119,45 @@ $valuearrayjsonstring = $valuearray -join ""
 
 $valuerraylistobject = ConvertFrom-Json $valuearrayjsonstring
 
-$valuerraylistobject.records | Select-Object @{Name = "NSGFlows"; Expression = { $_.properties.flows } }
-# for ($i = 1; $i -lt $valuearray.Length - 1; $i++) {
-#     Write-Host $valuearray[$i];
-#     if ($i -eq 5) {
-#         break;
-#     }
-# }
+$Records = New-Object Collections.Generic.List[PSCustomObject]
+foreach ($value in $valuerraylistobject.records) {    
+    foreach ($NSGFlowRecord in $value.properties.flows) {
+        foreach ($flow in $NSGFlowRecord.flows) {
+            foreach ($flowtuple in $flow.flowTuples) {
+                $FlowTupleMembers = $flowtuple -Split ","
+                $TimeRecord = [PSCustomObject]@{
+                    TimeGenerated                = $value.time
+                    MacAddress                   = $value.macAddress
+                    ResourceId                   = $value.resourceId
+                    Rule                         = $NSGFlowRecord.rule
+                    TimeWhenOcurred              = (Get-Date 01.01.1970) + ([System.TimeSpan]::FromSeconds($FlowTupleMembers[0]))
+                    SourceIP                     = $FlowTupleMembers[1]
+                    DestinationIp                = $FlowTupleMembers[2]
+                    SourcePort                   = $FlowTupleMembers[3]
+                    DestinationPort              = $FlowTupleMembers[4]
+                    Protocol                     = $FlowTupleMembers[5]
+                    TrafficFlow                  = $FlowTupleMembers[6]
+                    TrafficDecision              = $FlowTupleMembers[7]
+                    FlowState                    = $FlowTupleMembers[8]
+                    PacketsSourceToDestination   = $FlowTupleMembers[9]
+                    BytessentSourceToDestination = $FlowTupleMembers[10]
+                    PacketsDestinationToSource   = $FlowTupleMembers[11]
+                    BytessentDestinationToSource = $FlowTupleMembers[12]
+                }
+                $Records.Add($TimeRecord)
+            }
+        }
+    }
+}
+if ($ExportCsv.IsPresent) {
+    $FileLogTimeIdentifier = $LogTime.ToString("ddMMyyyyhhmmss")
+    $CsvFileName = "Nsgflowlogs_$($NSGName)_$($MacAddress)_$FileLogTimeIdentifier.csv" 
+    $Records | Export-Csv -Path $CsvFileName
+}
+else {
+    $Records
+}
+
+
+
+
