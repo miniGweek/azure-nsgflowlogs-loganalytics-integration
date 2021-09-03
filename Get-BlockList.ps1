@@ -180,10 +180,9 @@ foreach ($CloudBlockBlob in $CloudBlockBlobs) {
     $CsvFileName = "Nsgflowlogs_$($NSGName)_$($MacAddress)_$FileLogTimeIdentifier.csv" 
     $Records | Export-Csv -Path $CsvFileName -Append
     Write-Host "Appended CloudBlockBlob data at index:$CloudBlockBlobIndex to csv"
-
+    $Records
     $Records = New-Object Collections.Generic.List[PSCustomObject]
     
 }
-
 
 
