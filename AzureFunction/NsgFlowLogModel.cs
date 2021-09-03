@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace SXiQTest.Function
+namespace NSGFlowLogBlobTrigger
 {
-    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse); 
     public class Flow
     {
         
@@ -35,7 +33,7 @@ namespace SXiQTest.Function
         public Properties properties { get; set; }
     }
 
-    public class Root
+    public class NSGFlowLogModel
     {
         public List<Record> records { get; set; }
     }

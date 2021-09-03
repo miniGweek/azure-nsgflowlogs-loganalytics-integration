@@ -1,22 +1,20 @@
 using System;
-using System.IO;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Collections.Generic;
 
-namespace SXiQTest.Function
+namespace NSGFlowLogBlobTrigger
 {
-    public static class funcdevnsgflowlogsblobtrigger
+    public static class BlobTrigger
     {
-        [FunctionName("funcdevnsgflowlogsblobtrigger")]
-        public static void Run([BlobTrigger("insights-logs-networksecuritygroupflowevent/{name}", Connection = "stsxiqdevnsgflowlogs_STORAGE")] String myBlob, string name, ILogger log)
+        [FunctionName("funcnsgflowlogblobtrigger")]
+        public static void Run([BlobTrigger("insights-logs-networksecuritygroupflowevent/{name}", Connection = "nsgflowlog_STORAGE")] String myBlob, string name, ILogger log)
         {
             log.LogInformation($"C# Blob trigger function Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
 
-            var blobData = JsonSerializer.Deserialize<Root>(myBlob);
-            var records = new List<TimeRecord>();
+            var blobData = JsonSerializer.Deserialize<NSGFlowLogModel>(myBlob);
+            var records = new List<FlattenedNsgFlowLogModel>();
             var loganalyticsWorkspaceId = GetEnvironmentVariable("loganalyticsWorkspaceId");
             var loganalyticsWorkspaceKey = GetEnvironmentVariable("loganalyticsWorkspaceKey");
             var loganalyticsClient = new AzureLogAnalyticsClient(loganalyticsWorkspaceId, loganalyticsWorkspaceKey);
@@ -30,13 +28,14 @@ namespace SXiQTest.Function
                         foreach (var flowtuple in flow.flowTuples)
                         {
                             var flowTupleMembers = flowtuple.Split(",");
-                            var timeRecord = new TimeRecord()
+
+                            var timeRecord = new FlattenedNsgFlowLogModel()
                             {
                                 TimeGenerated = value.time,
                                 MacAddress = value.macAddress,
                                 ResourceId = value.resourceId,
                                 Rule = NSGFlowRecord.rule,
-                                TimeWhenOcurred = DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt32(flowTupleMembers[0])).DateTime,
+                                TimeWhenOcurred = GetUTCDateTimeFromUnixEpoch(flowTupleMembers[0]),
                                 SourceIP = flowTupleMembers[1],
                                 DestinationIp = flowTupleMembers[2],
                                 SourcePort = flowTupleMembers[3],
@@ -49,6 +48,9 @@ namespace SXiQTest.Function
                                 BytessentSourceToDestination = flowTupleMembers[10],
                                 PacketsDestinationToSource = flowTupleMembers[11],
                                 BytessentDestinationToSource = flowTupleMembers[12],
+                                SubscriptionId = value.resourceId.Split("/")[2],
+                                ResourceGroup = value.resourceId.Split("/")[4],
+                                NSGName = value.resourceId.Split("/")[8]
                             };
                             records.Add(timeRecord);
                         }
@@ -58,11 +60,19 @@ namespace SXiQTest.Function
             }
             var recordJsonString = JsonSerializer.Serialize(records);
             loganalyticsClient.WriteLog("DevTest_NSGFlowLogs", recordJsonString);
+            log.LogInformation($"Written blob\n - {name} to loganalytics workspace");
         }
 
         private static string GetEnvironmentVariable(string name)
         {
             return System.Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
         }
+
+        private static DateTime GetUTCDateTimeFromUnixEpoch(string unixEpochTimeStamp)
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt32(unixEpochTimeStamp)).DateTime;
+        }
+
+
     }    
 }

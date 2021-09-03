@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SXiQTest.Function
+namespace NSGFlowLogBlobTrigger
 {
-    internal class TimeRecord
+    internal class FlattenedNsgFlowLogModel
     {
         public DateTime TimeGenerated { get; set; }
         public string MacAddress { get; set; }
@@ -23,5 +23,11 @@ namespace SXiQTest.Function
         public string BytessentSourceToDestination { get; set; }
         public string PacketsDestinationToSource { get; set; }
         public string BytessentDestinationToSource { get; set; }
+
+        public string SubscriptionId { get; set; }
+
+        public string ResourceGroup { get; set; }
+
+        public string NSGName { get; set; }
     }
 }

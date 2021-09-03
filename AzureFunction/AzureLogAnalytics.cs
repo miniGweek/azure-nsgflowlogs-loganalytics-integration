@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SXiQTest.Function
+namespace NSGFlowLogBlobTrigger
 {
     public class AzureLogAnalyticsClient
     {
