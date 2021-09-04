@@ -76,6 +76,7 @@ resource functionapp_appsettings 'Microsoft.Web/sites/config@2015-08-01' = {
     loganalyticsWorkspaceId: loganalyticsWorkspaceId
     loganalyticsWorkspaceKey: loganalyticsWorkspaceKey
     WEBSITE_RUN_FROM_PACKAGE: '1'
+    SCM_DO_BUILD_DURING_DEPLOYMENT: 'false'
   }
   dependsOn: [
     functionapp_resource
