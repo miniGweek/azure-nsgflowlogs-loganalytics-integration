@@ -30,3 +30,13 @@ jobs:
     environment: dev
     steps:
       - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.x
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./AzureFunction
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+        working-directory: ./AzureFunction
