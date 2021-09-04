@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "value": "rg-dev-nsgflowlogs"
+    },
+    "resourceGroupLocation": {
+      "value": "australiaeast"
+    },
+    "appServicePlan_name": {
+      "value": "asplsdevnsgflowlogs"
+    },
+    "functionName": {
+      "value": "funcdevnsgflowlogs"
+    },
+    "functionLocation": {
+      "value": "australiaeast"
+    },
+    "functionStorageAccount": {
+      "value": "stsxiqdevnsgflowlogs"
+    },
+    "blobTriggerTargetStorageAccountConnectionString": {
+      "value": "DefaultEndpointsProtocol=https;AccountName=stsxiqdevnsgflowlogs;AccountKey=nbyggDHCslrU2H7K6/Kewv3EaMVd5c9r2FGVw8FmLibQ0lz2AANL5N6JX06GznTET2TwAtvGfiAx1/n47Kue3g==;EndpointSuffix=core.windows.net"
+    },
+    "loganalyticsWorkspaceId": {
+      "value": "cd40932a-a6e4-413d-b260-67f1933d9595"
+    },
+    "loganalyticsWorkspaceKey": {
+      "value": "pxR4pPUW3PfkyHdDm4T3KJMu2ThPBiUDctxmJnQ2pVD/zfr+Fv58EsMjrPCQTFIbYLZvIZ+CRIn6vytqRdDCIA=="
+    }
+  }
+}

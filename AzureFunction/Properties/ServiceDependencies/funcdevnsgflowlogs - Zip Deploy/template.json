@@ -6,32 +6,16 @@
   },
   "parameters": {
     "resourceGroupName": {
-      "type": "string",
-      "defaultValue": "rg-dev-nsgflowlogs",
-      "metadata": {
-        "description": "Name of the resource group for the resource. It is recommended to put resources under same resource group for better tracking."
-      }
+      "type": "string"
     },
     "resourceGroupLocation": {
-      "type": "string",
-      "defaultValue": "australiaeast",
-      "metadata": {
-        "description": "Location of the resource group. Resource groups could have different location than resources, however by default we use API versions from latest hybrid profile which support all locations for resource types we support."
-      }
+      "type": "string"
     },
     "resourceName": {
-      "type": "string",
-      "defaultValue": "funcdevnsgflowlogs",
-      "metadata": {
-        "description": "Name of the main resource to be created by this template."
-      }
+      "type": "string"
     },
     "resourceLocation": {
-      "type": "string",
-      "defaultValue": "[parameters('resourceGroupLocation')]",
-      "metadata": {
-        "description": "Location of the resource. By default use resource group's location, unless the resource provider is not supported there."
-      }
+      "type": "string"
     }
   },
   "resources": [

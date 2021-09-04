@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "value": "rg-dev-nsgflowlogs",
+      "metadata": {
+        "description": "Name of the resource group for the resource. It is recommended to put resources under same resource group for better tracking."
+      }
+    },
+    "resourceGroupLocation": {
+      "value": "australiaeast",
+      "metadata": {
+        "description": "Location of the resource group. Resource groups could have different location than resources, however by default we use API versions from latest hybrid profile which support all locations for resource types we support."
+      }
+    },
+    "resourceName": {
+      "value": "funcdevnsgflowlogs",
+      "metadata": {
+        "description": "Name of the main resource to be created by this template."
+      }
+    },
+    "resourceLocation": {
+      "value": "australiaeast"
+    }
+  }
+}
