@@ -3,5 +3,10 @@
     "azureFunctions.projectLanguage": "C#",
     "azureFunctions.projectRuntime": "~3",
     "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.preDeployTask": "publish (functions)"
+    "azureFunctions.preDeployTask": "publish (functions)",
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/azure-deploy.yml"
+    ],
+    "github-actions.workflows.pinned.refresh.enabled": true,
+    "github-actions.workflows.pinned.refresh.interval": 65,
 }
