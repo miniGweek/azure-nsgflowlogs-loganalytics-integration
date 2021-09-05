@@ -1,11 +1,11 @@
 on:
   push:
-    branches: [ master, RahulS/feature/build_pipeline  ]
+    # branches: [ master, RahulS/feature/build_pipeline  ]
     paths:
       - ".github/workflows/azure-build-deploy-infra.yml"
       - "Deploy/**"
   pull_request:
-    branches: [ master,RahulS/feature/build_pipeline ]
+    # branches: [ master,RahulS/feature/build_pipeline ]
     paths:
       - ".github/workflows/azure-build-deploy-infra.yml"
       - "Deploy/**"
@@ -30,7 +30,7 @@ jobs:
      # Deploy Bicep file
       - name: Plan and check infra changes
         run: |
-          cat Deploy/parameters.bicep.json| jq -r ".parameters.resourceGroupName.value"
+          cat 'Deploy/parameters.bicep.json' | jq -r ".parameters.resourceGroupName.value"
           az deployment group what-if --resource-group rg-dev-nsgflowlogs \
           --template-file .\Deploy\template.bicep --parameters .\Deploy\parameters.bicep.json
       
