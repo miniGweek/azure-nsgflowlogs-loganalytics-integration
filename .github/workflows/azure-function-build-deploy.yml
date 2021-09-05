@@ -1,11 +1,11 @@
 on:
   push:
-    branches: [ master, RahulS/feature/build_pipeline  ]
+    # branches: [ master, RahulS/feature/build_pipeline  ]
     paths:
       - ".github/workflows/azure-function-build-deploy.yml"
       - "AzureFunction/**"
   pull_request:
-    branches: [ master,RahulS/feature/build_pipeline ]
+    # branches: [ master,RahulS/feature/build_pipeline ]
     paths:
       - ".github/workflows/azure-function-build-deploy.yml"
       - "AzureFunction/**"
