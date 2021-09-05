@@ -31,7 +31,9 @@ jobs:
         run: |
           resourceGroup=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.resourceGroupName.value")
           az deployment group what-if --resource-group $resourceGroup \
-          --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json
+          --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json \
+          --parameters blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} \
+           loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}
 
 
   bicep-deploy:
@@ -53,5 +55,7 @@ jobs:
       - name: Plan and check infra changes
         run: |
           resourceGroup=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.resourceGroupName.value")
-          az deployment group what-if --resource-group $resourceGroup \
-          --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json
+          az deployment group create --resource-group $resourceGroup \
+          --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json \
+          --parameters blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} \
+           loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}
