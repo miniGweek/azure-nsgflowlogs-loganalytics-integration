@@ -19,14 +19,11 @@ jobs:
           functionAppName=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
           echo "::set-output name=functionAppName::$functionAppName"
 
-      - run: |
-          echo ${{steps.read_parameters_file.outputs.functionAppName}}
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.x
-          
+
       - name: Restore dependencies
         run: dotnet restore
         working-directory: ./AzureFunction
