@@ -49,7 +49,7 @@ jobs:
       - name: Deploy infra
         run: |
           resourceGroup=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.resourceGroupName.value")
+           paramSecrets="blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}"
           az deployment group create --resource-group $resourceGroup \
           --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json \
-          --parameters blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} \
-           loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}
+          --parameters $paramSecrets
