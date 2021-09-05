@@ -28,9 +28,8 @@ jobs:
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/bin ./artifactsdirectory
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/funcnsgflowlogblobtrigger ./artifactsdirectory
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/host.json ./artifactsdirectory
-
-         functionAppName=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
-         echo "::set-env name=FUNCTIONAPPNAME::$functionAppName"
+        env:
+          FUNCTIONAPPNAME: $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
 
       - uses: azure/login@v1
         name: Azure cli login
@@ -41,5 +40,5 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: $FUNCTIONAPPNAME
+          app-name: ${{env.FUNCTIONAPPNAME}}
           package: 'artifactsdirectory'
