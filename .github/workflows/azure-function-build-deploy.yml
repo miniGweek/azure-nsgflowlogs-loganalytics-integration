@@ -12,15 +12,13 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - name: Read Parameters file and set Environment variables
-        run: echo $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
-        env:
-          FUNCTIONAPPNAME: $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
+      - name: Read Parameters file
+        run: |
+          functionAppName=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
+          echo "::set-output name=functionAppName::$functionAppName"
 
       - run: |
-          echo 'Testing $FUNCTIONAPPNAME'
-          echo $FUNCTIONAPPNAME
-          echo 'Testing'
+          echo ${{steps.read_parameters_file.outputs.functionAppName}}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
