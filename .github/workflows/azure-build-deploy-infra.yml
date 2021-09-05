@@ -1,0 +1,61 @@
+on:
+  push:
+    # branches: [ master, RahulS/feature/build_pipeline  ]
+    paths:
+      - ".github/workflows/azure-build-deploy-infra.yml"
+      - "Deploy/**"
+  pull_request:
+    # branches: [ master,RahulS/feature/build_pipeline ]
+    paths:
+      - ".github/workflows/azure-build-deploy-infra.yml"
+      - "Deploy/**"
+  release:
+    types: [created]
+
+jobs:
+  bicep-plan:
+    name: Bicep Plan
+    runs-on: ubuntu-18.04
+    steps:
+    # Checkout Repository
+      - uses: actions/checkout@v2
+
+    # Login to Azure using Service Principal
+      - uses: azure/login@v1
+        name: Azure cli login
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+     # Plan and check Bicep output
+      - name: Plan and check infra changes
+        run: |
+          resourceGroup=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.resourceGroupName.value")
+          az deployment group what-if --resource-group $resourceGroup \
+          --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json \
+          --parameters blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} \
+           loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}
+
+
+  bicep-deploy:
+    name: Bicep Deploy
+    runs-on: ubuntu-18.04
+    environment: dev
+    needs: bicep-plan
+    steps:
+    # Checkout Repository
+      - uses: actions/checkout@v2
+
+    # Login to Azure using Service Principal
+      - uses: azure/login@v1
+        name: Azure cli login
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+     # Plan and check Bicep output
+      - name: Deploy infra
+        run: |
+          resourceGroup=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.resourceGroupName.value")
+          az deployment group create --resource-group $resourceGroup \
+          --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json \
+          --parameters blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} \
+           loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}
