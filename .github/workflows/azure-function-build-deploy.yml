@@ -12,6 +12,14 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
+      - name: Read Parameters file and set Environment variables
+        env:
+          FUNCTIONAPPNAME: $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
+
+      - run: |
+          echo 'Testing $FUNCTIONAPPNAME'
+          echo $FUNCTIONAPPNAME
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
@@ -28,8 +36,6 @@ jobs:
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/bin ./artifactsdirectory
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/funcnsgflowlogblobtrigger ./artifactsdirectory
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/host.json ./artifactsdirectory
-        env:
-          FUNCTIONAPPNAME: $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
 
       - uses: azure/login@v1
         name: Azure cli login
@@ -40,5 +46,5 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: ${{env.FUNCTIONAPPNAME}}
+          app-name: $FUNCTIONAPPNAME
           package: 'artifactsdirectory'
