@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Read Parameters file and set Environment variables
+        run: echo $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
         env:
           FUNCTIONAPPNAME: $(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
 
