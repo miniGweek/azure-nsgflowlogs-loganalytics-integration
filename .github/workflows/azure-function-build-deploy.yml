@@ -25,5 +25,12 @@ jobs:
         working-directory: ./AzureFunction
       - name: Copy Release Files To Artifacts Directory
         run: |
+         pwd
          mkdir -p artifactsdirectory
-         echo 'hello world'
+         cp -r ./AzureFunction/bin/Release/netcoreapp3.1/bin ./artifactsdirectory
+         cp -r ./AzureFunction/bin/Release/netcoreapp3.1/funcnsgflowlogblobtrigger ./artifactsdirectory
+         cp -r ./AzureFunction/bin/Release/netcoreapp3.1/host.json ./artifactsdirectory
+         ls ./artifactsdirectory
+         ls ./artifactsdirectory/bin
+         ls ./artifactsdirectory/funcnsgflowlogblobtrigger
+         
