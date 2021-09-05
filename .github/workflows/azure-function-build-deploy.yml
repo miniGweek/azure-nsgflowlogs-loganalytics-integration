@@ -23,3 +23,7 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
         working-directory: ./AzureFunction
+      - name: Copy Release Files To Artifacts Directory
+        run: |
+         mkdir -p artifactsdirectory
+         echo 'hello world'
