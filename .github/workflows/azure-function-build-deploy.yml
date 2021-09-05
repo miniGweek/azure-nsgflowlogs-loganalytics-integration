@@ -6,6 +6,7 @@ on:
   release:
     types: [created]
 
+env: dev
 jobs:
   build-and-deploy:
     name: Build and Deploy
@@ -34,3 +35,8 @@ jobs:
         with:
           name: artifact-function-blobtrigger
           path: artifactsdirectory
+
+      - uses: azure/login@v1
+        name: Azure cli login
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
