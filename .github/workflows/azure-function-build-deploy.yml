@@ -39,4 +39,5 @@ jobs:
         name: Azure cli login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-        run: az resource list -g rg-dev-nsgflowlogs --query "[].name" -o tsv
+      - run: az resource list -g rg-dev-nsgflowlogs --query "[].name" -o tsv
+        name: Test Azure Login
