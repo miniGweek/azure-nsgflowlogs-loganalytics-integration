@@ -45,5 +45,10 @@ jobs:
         name: Azure cli login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - run: az resource list -g rg-dev-nsgflowlogs --query "[].name" -o tsv
-        name: Test Azure Login
+
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: funcdevnsgflowlogs
+          package: 'artifactsdirectory'
