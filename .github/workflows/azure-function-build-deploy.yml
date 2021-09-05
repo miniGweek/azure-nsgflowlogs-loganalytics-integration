@@ -50,5 +50,5 @@ jobs:
         env:
           FUNCTIONAPPNAME: '$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")'
         with:
-          app-name: env.FUNCTIONAPPNAME
+          app-name: ${{env.FUNCTIONAPPNAME}}
           package: 'artifactsdirectory'
