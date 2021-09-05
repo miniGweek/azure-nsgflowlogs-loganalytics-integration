@@ -30,6 +30,7 @@ jobs:
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/funcnsgflowlogblobtrigger ./artifactsdirectory
          cp -r ./AzureFunction/bin/Release/netcoreapp3.1/host.json ./artifactsdirectory
       - uses: actions/upload-artifact@v2
+        name: Azure Function Artifact
         with:
-          name: Azure Function Artifact
+          name: artifact-function-blogtrigger
           path: artifactsdirectory
