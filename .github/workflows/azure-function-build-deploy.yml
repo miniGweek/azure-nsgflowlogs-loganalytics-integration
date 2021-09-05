@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Read Parameters file
+        id: read_parameters_file
         run: |
           functionAppName=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")
           echo "::set-output name=functionAppName::$functionAppName"
@@ -20,33 +21,33 @@ jobs:
       - run: |
           echo ${{steps.read_parameters_file.outputs.functionAppName}}
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.1.x
-      - name: Restore dependencies
-        run: dotnet restore
-        working-directory: ./AzureFunction
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-        working-directory: ./AzureFunction
-      - name: Copy Release Files To Artifacts Directory
-        run: |
-         mkdir -p artifactsdirectory         
-         cp -r ./AzureFunction/bin/Release/netcoreapp3.1/bin ./artifactsdirectory
-         cp -r ./AzureFunction/bin/Release/netcoreapp3.1/funcnsgflowlogblobtrigger ./artifactsdirectory
-         cp -r ./AzureFunction/bin/Release/netcoreapp3.1/host.json ./artifactsdirectory
+      # - name: Setup .NET
+      #   uses: actions/setup-dotnet@v1
+      #   with:
+      #     dotnet-version: 3.1.x
+      # - name: Restore dependencies
+      #   run: dotnet restore
+      #   working-directory: ./AzureFunction
+      # - name: Build
+      #   run: dotnet build --configuration Release --no-restore
+      #   working-directory: ./AzureFunction
+      # - name: Copy Release Files To Artifacts Directory
+      #   run: |
+      #    mkdir -p artifactsdirectory         
+      #    cp -r ./AzureFunction/bin/Release/netcoreapp3.1/bin ./artifactsdirectory
+      #    cp -r ./AzureFunction/bin/Release/netcoreapp3.1/funcnsgflowlogblobtrigger ./artifactsdirectory
+      #    cp -r ./AzureFunction/bin/Release/netcoreapp3.1/host.json ./artifactsdirectory
 
-      - uses: azure/login@v1
-        name: Azure cli login
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # - uses: azure/login@v1
+      #   name: Azure cli login
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
-        env:
-          FUNCTIONAPPNAME: '$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")'
-        with:
-          app-name: ${{env.FUNCTIONAPPNAME}}
-          package: 'artifactsdirectory'
+      # - name: 'Run Azure Functions Action'
+      #   uses: Azure/functions-action@v1
+      #   id: fa
+      #   env:
+      #     FUNCTIONAPPNAME: '$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.functionName.value")'
+      #   with:
+      #     app-name: ${{env.FUNCTIONAPPNAME}}
+      #     package: 'artifactsdirectory'
