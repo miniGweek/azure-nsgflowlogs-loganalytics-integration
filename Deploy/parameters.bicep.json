@@ -20,14 +20,8 @@
     "functionStorageAccount": {
       "value": "stsxiqdevnsgflowlogs"
     },
-    "blobTriggerTargetStorageAccountConnectionString": {
-      "value": ""
-    },
     "loganalyticsWorkspaceId": {
       "value": "cd40932a-a6e4-413d-b260-67f1933d9595"
-    },
-    "loganalyticsWorkspaceKey": {
-      "value": ""
     }
   }
 }
