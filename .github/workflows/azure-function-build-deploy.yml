@@ -5,7 +5,7 @@ on:
     branches: [ master,RahulS/feature/build_pipeline ]
   release:
     types: [created]
-    
+
 jobs:
   build-and-deploy:
     name: Build and Deploy
@@ -39,3 +39,4 @@ jobs:
         name: Azure cli login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+        run: az resource list -g rg-dev-nsgflowlogs --query "[].name" -o tsv
