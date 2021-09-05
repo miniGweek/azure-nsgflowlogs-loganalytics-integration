@@ -5,8 +5,7 @@ on:
     branches: [ master,RahulS/feature/build_pipeline ]
   release:
     types: [created]
-
-env: dev
+    
 jobs:
   build-and-deploy:
     name: Build and Deploy
