@@ -27,7 +27,7 @@ jobs:
           paramSecrets="blobTriggerTargetStorageAccountConnectionString=${{secrets.NSGFLOWLOGSFUNCTION_BLOBTRIGGERTARGETSTORAGEACCOUNTCONNECTIONSTRING}} loganalyticsWorkspaceKey=${{secrets.NSGFLOWLOGSFUNCTION_LOGANALYTICSWORKSPACEKEY}}"
           az deployment group what-if --resource-group $resourceGroup \
           --template-file ./Deploy/template.bicep --parameters ./Deploy/parameters.bicep.json \
-          --parameters paramSecrets
+          --parameters $paramSecrets
 
 
   bicep-deploy:
