@@ -13,8 +13,8 @@ on:
     types: [created]
 
 jobs:
-  build-and-deploy:
-    name: Plan and Deploy Infra
+  bicep-plan:
+    name: Bicep Plan
     runs-on: ubuntu-18.04
     environment: dev
     steps:
@@ -27,7 +27,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-     # Deploy Bicep file
+     # Plan and check Bicep output
       - name: Plan and check infra changes
         run: |
           resourceGroup=$(cat ./Deploy/parameters.bicep.json | jq -r ".parameters.resourceGroupName.value")
