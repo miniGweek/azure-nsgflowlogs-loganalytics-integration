@@ -1,11 +1,5 @@
 on:
   push:
-    # branches: [ master, RahulS/feature/build_pipeline  ]
-    paths:
-      - ".github/workflows/azure-build-deploy-infra.yml"
-      - "Deploy/**"
-  pull_request:
-    # branches: [ master,RahulS/feature/build_pipeline ]
     paths:
       - ".github/workflows/azure-build-deploy-infra.yml"
       - "Deploy/**"

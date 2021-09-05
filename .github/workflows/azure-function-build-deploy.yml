@@ -1,11 +1,5 @@
 on:
   push:
-    # branches: [ master, RahulS/feature/build_pipeline  ]
-    paths:
-      - ".github/workflows/azure-function-build-deploy.yml"
-      - "AzureFunction/**"
-  pull_request:
-    # branches: [ master,RahulS/feature/build_pipeline ]
     paths:
       - ".github/workflows/azure-function-build-deploy.yml"
       - "AzureFunction/**"
@@ -16,7 +10,6 @@ jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-18.04
-    environment: dev
     steps:
       - uses: actions/checkout@v2
       - name: Setup .NET
