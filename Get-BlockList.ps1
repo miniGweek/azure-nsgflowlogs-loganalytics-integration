@@ -3,7 +3,8 @@ param(
     [string] $NSGName,
     [string] [Parameter(Mandatory = $true)]$StorageAccountName,    
     [string]$MacAddress,
-    [datetime]$LogTime
+    [datetime][Parameter(Mandatory = $true)]$StartTime,
+    [datetime]$EndTime = "01/01/1970"
 )
 function Get-NSGFlowLogCloudBlockBlob {
     [CmdletBinding()]
@@ -114,27 +115,44 @@ $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount
 $Ctx = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $StorageAccountKey
 
 $CloudBlockBlobs = @();
-if ($NSGName.Length -gt 0) {
-    $NSG = Get-AzNetworkSecurityGroup | Where-Object { $_.Name -eq $NSGName }
-    
-    $CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
-        -storageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey  -Ctx $Ctx `
-        -NSGName $NSGName  -NSGResourceGroupName $NSG.ResourceGroupName `
-        -macAddress $MacAddress -logTime $LogTime
 
-    $CloudBlockBlobs += $CloudBlockBlob
+$StartTime = $StartTime.AddMinutes(-$StartTime.Minute)   # Discarding minutes part and only using hours
+$EndTime = $EndTime.AddMinutes(-$EndTime.Minute) # Discarding minutes part and only using hours
+$TotalHours = 0
+if ($EndTime -gt $StartTime) {
+    $TimeSpan = New-TimeSpan -Start $StartTime -End $EndTime
+    $TotalHours = $TimeSpan.Days * 24 + $TimeSpan.Hours
 }
-else {
-    $NSGs = Get-AzNetworkSecurityGroup
-    foreach ($NSG in $NSGs) {
+
+for ($Index = 0; $Index -le $TotalHours; $Index++ ) {
+  
+   
+    if ($NSGName.Length -gt 0) {
+        $NSG = Get-AzNetworkSecurityGroup | Where-Object { $_.Name -eq $NSGName }
+        
         $CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
             -storageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey  -Ctx $Ctx `
-            -NSGName $NSG.Name  -NSGResourceGroupName $NSG.ResourceGroupName `
-            -logTime $LogTime
-
+            -NSGName $NSGName  -NSGResourceGroupName $NSG.ResourceGroupName `
+            -macAddress $MacAddress -logTime $StartTime
+    
         $CloudBlockBlobs += $CloudBlockBlob
     }
+    else {
+        $NSGs = Get-AzNetworkSecurityGroup
+        foreach ($NSG in $NSGs) {
+            $CloudBlockBlob = Get-NSGFlowLogCloudBlockBlob -subscriptionId $SubscriptionId `
+                -storageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey  -Ctx $Ctx `
+                -NSGName $NSG.Name  -NSGResourceGroupName $NSG.ResourceGroupName `
+                -logTime $StartTime
+    
+            $CloudBlockBlobs += $CloudBlockBlob
+        }
+    }
+
+    $StartTime = $StartTime.AddHours(1)    
 }
+
+
 $Records = New-Object Collections.Generic.List[PSCustomObject]
 Write-Host "Total CloudBlockBlobs to iterate :$($CloudBlockBlobs.Length)"
 $CloudBlockBlobIndex = 0;
@@ -176,7 +194,7 @@ foreach ($CloudBlockBlob in $CloudBlockBlobs) {
     }
     Write-Host "Processed CloudBlockBlob index:$CloudBlockBlobIndex"
 
-    $FileLogTimeIdentifier = $LogTime.ToString("ddMMyyyyhhmmss")
+    $FileLogTimeIdentifier = $StartTime.ToString("ddMMyyyyhhmmss")
     $CsvFileName = "Nsgflowlogs_$($NSGName)_$($MacAddress)_$FileLogTimeIdentifier.csv" 
     $Records | Export-Csv -Path $CsvFileName -Append
     Write-Host "Appended CloudBlockBlob data at index:$CloudBlockBlobIndex to csv"
