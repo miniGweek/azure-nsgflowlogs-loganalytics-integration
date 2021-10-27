@@ -1,3 +1,5 @@
+# Usage as follows:
+# .\Get-NsgFlowLogs.ps1 -SubscriptionName "Visual Studio Enterprise Subscription – MPN" -StorageAccountName stsxiqdevnsgflowlogs -StartTime "10/27/2021 03:30" -EndTime  "10/27/2021 04:30"
 param(
     [string] [Parameter(Mandatory = $true)]$SubscriptionName,
     [string] $NSGName,
